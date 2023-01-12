@@ -1,0 +1,164 @@
+#!/bin/bash
+#
+# Access dict protocol from the command line using curl
+# and aspell via single interface
+#
+prog=${0##*/}
+
+print_help(){
+    echo "
+    $prog [ -c [-l <language|dictionary>] -L -s -t ] \"<words|file>\" [\"<aspell options|curl options>\"]
+
+    All we can do with words:
+     - Spell check a file or words: needs aspell and local language dictionaries to be be installed.
+     - Lookup the meaning of words, default is to lookup English words in the gcide dictionary.
+     - Translate words into another language. 
+    Lookup and translate need curl to be installed
+    Be aware spell check is done against local installed databases, to see them use \"-c -L\"
+    Lookups and translate are done against DICT network databases, to see them use \"-L\" without \"-c\"
+    
+    options:
+     -c Check spelling of <word> using aspell
+     -L List local languages for aspell or network <dictionaries> for curl.
+        The network <dictionaries> can also be groups of dictionaries like \"all\" or \"trans\"
+     -l <language|dictionary>
+        The language or dictionary to use 
+        Use: \"export DICT_DICTIONARY=<dictionary>\" to set a session default.
+        Use: \"export DICT_DICTIONARY_TRANS=<dictionary>\" to set a session default for a translation, option -t.
+        Use: \"export DICT_DICTIONARY_CHECK=<dictionary>\" to set a session default for a spell checking, option -c.
+     -s Search the index the \"english\" dictionary group or a specific dictionary using option -l <dictionary> 
+        for the presence of a word.
+        Be aware search doesn't always return matches as it depends on the quality of the dictionary index.
+        So the lookup (without the -s option) might still work. Or make a spelling mistake to find 
+        words that will lookup...
+     -t Search for all translations of a word if no <dictionary> is added, in other
+        words use dictionary group \"trans\". Use option -l <dictionary> to 
+        translate the word against a dictionary or group of dictionaries. 
+        If -s is also present, search for the word. This will spit out a list of possible words
+     
+    examples:
+    Passing a aspell option to a spell check of a html file:
+        dict -c  c:/temp/measure_pu.html "--mode=html"
+    Lookup meaning of a word:
+        dict \"dragonfly\"
+    Translate 2 dutch words to english:
+        dict -l fd-nld-eng \"voet knie\"
+    "
+}
+
+dict(){
+    #
+    # do a curl dict command 
+    lLang="$1"
+    lWords="$2"
+    lOpts="$3"
+    lDict=""
+
+    curl=$(which curl)
+    [[ -z "$curl" ]] && echo "FATAL: curl wasn't found please install first" && exit 1
+
+    #
+    # reduce curl output, but not if a curl options is passed
+    redirect="/dev/null" 
+    reduceCmd="grep -v -e '^250 ok' -e '^221 bye' -e '^220 dict\.dict\.org'"
+    [[ -n "$lOpts" ]] && redirect="/dev/stdout" reduceCmd="cat" 
+    if [[ $listDict -eq 1 ]]; then
+        #
+        # list available dictionaries
+        $curl dict://dict.org/"SHOW DB" 2>$redirect | eval $reduceCmd 
+    else
+        #
+        # set command
+        lCmd="d"   # show meaning or translate
+        [[ $search -eq 1 ]] && lCmd="m" # match (search) each dictionary for word
+    
+        #
+        # set dictionary
+        [[ -n "$lLang" ]] && lDict=":$lLang"
+        
+        for lWord in $lWords; do
+            #
+            # look for lWord
+            [[ $debug -gt 0 ]] && echo Doing: \"$lWord\"
+            $curl $lOpts dict://dict.org/$lCmd:"$lWord""$lDict" 2>$redirect | eval $reduceCmd  
+        done
+    fi 
+}
+
+spell(){
+    #
+    # spell check a word or a sentence 
+    lLang="$1"
+    lWords="$2"
+    lOpts="$3"
+
+    aspell=$(which aspell)
+    [[ -z "$aspell" ]] && echo "FATAL: aspell wasn't found please install first" && exit 1
+    
+    #
+    # special dictionary (language)
+    [[ -n "$lLang" ]] && lOpts="$lOpts --lang $lLang"
+
+    #
+    # is input a file with content
+    lCmd="echo"
+    [[ -s "$lWords" ]] && lCmd="cat" 
+    
+    if [[ $listDict -eq 1 ]]; then
+        #
+        # list available dictionaries
+        $aspell dump dicts
+    else
+        #
+        # do a spell check
+        $lCmd $lWords | eval $aspell -a $lOpts 
+    fi
+}
+
+typeset -i debug=0 check=0 translate=0 search=0 listDict=0
+
+while getopts "h\?DLcl:stv" s
+do
+    case $s in
+        c) check=1
+           ;;
+        D) debug=debug+1
+           ;;
+        L) listDict=1
+           ;;
+        l) dictionary=$OPTARG
+           ;;
+        s) search=1
+           ;;
+        t) translate=1
+           ;;
+        v) set -x
+           ;;
+        h|*) showHelp=1
+           ;;
+    esac
+done
+shift $(($OPTIND - 1))
+words="$1"
+shift
+
+[[ $showHelp -eq 1 ]] && print_help && exit
+
+#
+# set defaults dictionary
+[[ -n "DICT_DICTIONARY" && -z "$dictionary" ]] && dictionary="$DICT_DICTIONARY"
+[[ -n "DICT_DICTIONARY_TRANS" && $translate -eq 1 && -z "$dictionary" ]] && dictionary="$DICT_DICTIONARY_TRANS"
+[[ -n "DICT_DICTIONARY_CHECK" && $check -eq 1 && -z "$dictionary" ]] && dictionary="$DICT_DICTIONARY_CHECK"
+[[ $translate -eq 1 && -z "$dictionary" ]] && dictionary="trans"
+[[ $check -eq 0 && -z "$dictionary" ]] && dictionary="english"
+
+#
+# check spelling
+if [[ $check -eq 1 ]];then 
+    spell "$dictionary" "$words" "$*" 
+    exit $?
+fi
+
+#
+# lookup using curl and dict urls
+dict "$dictionary" "$words" "$*"
