@@ -18,23 +18,23 @@ print_help(){
     Lookups and translate are done against DICT network databases, to see them use \"-L\" without \"-c\"
     
     options:
-     -c Check spelling of <word> using aspell
+     -c Check spelling of \"<words>\" using aspell. Be aware quotes are needed to check multiple words.
      -L List local languages for aspell or network <dictionaries> for curl.
         The network <dictionaries> can also be groups of dictionaries like \"all\" or \"trans\"
      -l <language|dictionary>
-        The language or dictionary to use 
+        The language or dictionary to use.
         Use: \"export DICT_DICTIONARY=<dictionary>\" to set a session default.
         Use: \"export DICT_DICTIONARY_TRANS=<dictionary>\" to set a session default for a translation, option -t.
         Use: \"export DICT_DICTIONARY_CHECK=<dictionary>\" to set a session default for a spell checking, option -c.
-     -s Search the index the \"english\" dictionary group or a specific dictionary using option -l <dictionary> 
+     -s Search the index of the \"english\" dictionary group or a specific dictionary using option -l <dictionary> 
         for the presence of a word.
         Be aware search doesn't always return matches as it depends on the quality of the dictionary index.
         So the lookup (without the -s option) might still work. Or make a spelling mistake to find 
         words that will lookup...
      -t Search for all translations of a word if no <dictionary> is added, in other
-        words use dictionary group \"trans\". Use option -l <dictionary> to 
+        words use dictionary group \"trans\". In stead you can use option -l <dictionary> to 
         translate the word against a dictionary or group of dictionaries. 
-        If -s is also present, search for the word. This will spit out a list of possible words
+        If option -s is also present, search for the word. This will spit out a list of possible words
      
     examples:
     Passing a aspell option to a spell check of a html file:
@@ -43,6 +43,8 @@ print_help(){
         dict \"dragonfly\"
     Translate 2 dutch words to english:
         dict -l fd-nld-eng \"voet knie\"
+    Lookup alike dutch words:
+        dict -s -l fd-nld-eng "voet knie"
     "
 }
 
