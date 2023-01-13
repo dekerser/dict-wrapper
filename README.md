@@ -42,7 +42,7 @@ To install the dependencies on cygwin:
     $ cd /tmp
     $ lynx -source gnu.mirror.constant.com/aspell/dict # show all dictionaries available
     $ lynx -source gnu.mirror.constant.com/aspell/dict/nl # show dutch dictionaries
-    $ lynx -source gnu.mirror.constant.com/aspell/dict/nl/aspell-nl-0.50-2.tar.bz2 > aspell-nl-0.50-2.tar.bz2 # get the lastest(?) 
+    $ lynx -source gnu.mirror.constant.com/aspell/dict/nl/aspell-nl-0.50-2.tar.bz2 > aspell-nl-0.50-2.tar.bz2 # get the latest(?) 
     $ 7z x aspell-nl-0.50-2.tar.bz2  # 7z is in cygwin package p7zip
     $ tar -xvf aspell-nl-0.50-2.tar
     $ cd aspell-nl-0.50-2
