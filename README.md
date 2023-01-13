@@ -48,6 +48,7 @@ To install the dependencies on cygwin:
     $ cd aspell-nl-0.50-2
     $ cat README # to check that next 3 lines are still correct
     $ ./configure
+    $ # to get make: apt-cyg install make 
     $ make # skipped 3 dutch words (no problem):  "rock-'n-roll" "rock-'n-roller" "spring-in-'t-veld"
     $ make install
   ```

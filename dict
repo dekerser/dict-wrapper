@@ -41,10 +41,12 @@ print_help(){
         dict -c  c:/temp/measure_pu.html "--mode=html"
     Lookup meaning of a word:
         dict \"dragonfly\"
+    Translate it using all \"trans\" dictionaries available:
+        dict -t \"dragonfly\"
     Translate 2 dutch words to english:
         dict -l fd-nld-eng \"voet knie\"
     Lookup alike dutch words:
-        dict -s -l fd-nld-eng "voet knie"
+        dict -s -l fd-nld-eng \"voet knie\"
     "
 }
 
@@ -56,7 +58,7 @@ dict(){
     lOpts="$3"
     lDict=""
 
-    curl=$(which curl)
+    curl=$(which curl 2>/dev/null)
     [[ -z "$curl" ]] && echo "FATAL: curl wasn't found please install first" && exit 1
 
     #
@@ -94,7 +96,7 @@ spell(){
     lWords="$2"
     lOpts="$3"
 
-    aspell=$(which aspell)
+    aspell=$(which aspell 2>/dev/null)
     [[ -z "$aspell" ]] && echo "FATAL: aspell wasn't found please install first" && exit 1
     
     #
